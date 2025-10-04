@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environment
+leap_env/
+venv/
+env/
+
+# Large data files
+*.csv
+training_features.csv
+
+# Model files (usually too large for git)
+models/
+*.h5
+*.pkl
+*.joblib
+*.pth
+
+# Zip archives
+zip files/
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter/IDE
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+#training data
+intentional/
+*.json
+unintentional/
+*.json

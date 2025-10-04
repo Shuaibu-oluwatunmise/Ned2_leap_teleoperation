@@ -1,0 +1,160 @@
+(leap_env) PS C:\Users\shuai\leap_motion_control> python train_model.py
+
+╔════════════════════════════════════════════════════════════════╗
+║              HAND MOVEMENT CLASSIFIER TRAINING                 ║
+║         Train ML model for intentional vs unintentional        ║
+╚════════════════════════════════════════════════════════════════╝
+
+Loading data from: training_features.csv
+Dataset shape: (35712, 20)
+Label distribution:
+label
+intentional      17858
+unintentional    17854
+Name: count, dtype: int64
+
+Features: 18
+Samples: 35712
+
+Splitting data:
+  Train: 70%
+  Validation: 10%
+  Test: 20%
+
+Actual split sizes:
+  Train: 24997 samples
+  Validation: 3572 samples
+  Test: 7143 samples
+
+Scaling features...
+
+============================================================
+TRAINING MODELS
+============================================================
+
+Training Random Forest...
+  Cross-validation accuracy: 0.9936 (+/- 0.0010)
+
+Training Gradient Boosting...
+  Cross-validation accuracy: 0.9950 (+/- 0.0005)
+
+Training Logistic Regression...
+  Cross-validation accuracy: 0.9848 (+/- 0.0009)
+
+============================================================
+VALIDATION RESULTS
+============================================================
+
+Random Forest:
+  Accuracy: 0.9952
+
+  Classification Report:
+                   precision    recall  f1-score   support
+    
+      intentional       1.00      0.99      1.00      1786
+    unintentional       0.99      1.00      1.00      1786
+
+         accuracy                           1.00      3572
+        macro avg       1.00      1.00      1.00      3572
+     weighted avg       1.00      1.00      1.00      3572
+
+
+Gradient Boosting:
+  Accuracy: 0.9950
+
+  Classification Report:
+                   precision    recall  f1-score   support
+    
+      intentional       1.00      0.99      0.99      1786
+    unintentional       0.99      1.00      0.99      1786
+
+         accuracy                           0.99      3572
+        macro avg       0.99      0.99      0.99      3572
+     weighted avg       0.99      0.99      0.99      3572
+
+
+Logistic Regression:
+  Accuracy: 0.9849
+
+  Classification Report:
+                   precision    recall  f1-score   support
+    
+      intentional       0.98      0.99      0.98      1786
+    unintentional       0.99      0.98      0.98      1786
+
+         accuracy                           0.98      3572
+        macro avg       0.98      0.98      0.98      3572
+     weighted avg       0.98      0.98      0.98      3572
+
+
+============================================================
+BEST MODEL: Random Forest
+Validation Accuracy: 0.9952
+============================================================
+
+============================================================
+FEATURE IMPORTANCE
+============================================================
+
+Top 10 most important features:
+   1. hand_presence_ratio      : 0.2693
+   2. finger_mean              : 0.1519
+   3. hand_present_frames      : 0.1515
+   4. position_y_mean          : 0.0837
+   5. direction_consistency    : 0.0584
+   6. position_x_mean          : 0.0441
+   7. acceleration_mean        : 0.0361
+   8. velocity_std             : 0.0294
+   9. grab_max                 : 0.0281
+  10. pinch_max                : 0.0230
+
+============================================================
+FINAL TEST SET EVALUATION
+============================================================
+
+Model: Random Forest
+Test Accuracy: 0.9951 (99.51%)
+
+Classification Report:
+               precision    recall  f1-score   support
+
+  intentional       1.00      0.99      1.00      3572
+unintentional       0.99      1.00      1.00      3571
+
+     accuracy                           1.00      7143
+    macro avg       1.00      1.00      1.00      7143
+ weighted avg       1.00      1.00      1.00      7143
+
+
+Confusion Matrix:
+[[3544   28]
+ [   7 3564]]
+
+  [TN  FP]
+  [FN  TP]
+
+Detailed Metrics (Intentional class):
+  Precision: 0.9922 (% of predicted intentional that are correct)
+  Recall: 0.9980 (% of actual intentional that are detected)
+  F1-Score: 0.9951
+  False Positive Rate: 0.0078 (unintentional classified as intentional)        
+  False Negative Rate: 0.0020 (intentional classified as unintentional)        
+
+✅ Model saved to: .\hand_classifier_20251002_221301.pkl
+✅ Scaler saved to: .\feature_scaler_20251002_221301.pkl
+✅ Model info saved to: .\model_info_20251002_221301.pkl
+
+============================================================
+TRAINING COMPLETE!
+============================================================
+Final test accuracy: 0.9951
+
+Next steps:
+  1. Review the metrics above
+  2. If accuracy is good (>85%), proceed to integration
+  3. If accuracy is low, consider collecting more data or tuning features      
+
+Model files ready for deployment:
+  - .\hand_classifier_20251002_221301.pkl
+  - .\feature_scaler_20251002_221301.pkl
+(leap_env) PS C:\Users\shuai\leap_motion_control> 

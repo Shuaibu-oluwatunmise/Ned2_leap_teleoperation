@@ -1,0 +1,5 @@
+Data collection
+Catrgories: Intentional | Unintentional
+Number of people to collect from: 10
+Number of files per person per catrgory: 20
+Duration of testing for each file: 45 Seconds.

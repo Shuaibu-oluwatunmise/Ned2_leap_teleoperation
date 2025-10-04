@@ -1,0 +1,3 @@
+leap_env\Scripts\activate
+cd ROBOTICS
+python <name of file>

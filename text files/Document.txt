@@ -1,0 +1,190 @@
+ML HAND MOVEMENT CLASSIFICATION PROJECT ROADMAP
+=================================================
+
+PROJECT GOAL: Build ML system to distinguish intentional vs unintentional hand movements 
+for Leap Motion + NED2 robot control with 85-92% accuracy target.
+
+PHASE 1: DATA COLLECTION
+========================
+
+Target Dataset:
+- 400 total files (200 intentional, 200 unintentional)
+- 20 files per person per category
+- 10 people total (including yourself)
+- 45 seconds per recording
+- Both hands in frame when possible
+
+Data Collection Setup:
+1. Activate virtual environment: leap_env\Scripts\activate
+2. Run data recorder: python data_recorder.py
+3. Use 'i' for intentional, 'u' for unintentional, Ctrl+C to stop
+4. Files save to intentional/ and unintentional/ folders
+
+Recording Scenarios:
+INTENTIONAL:
+- Deliberate robot control movements
+- Include grabbing motions (grab_strength > 0)
+- Various speeds and orientations
+- Focused, controlled gestures
+
+UNINTENTIONAL:
+- Reaching for objects (phone, pen, etc.)
+- Typing while hands pass over sensor
+- Stretching, scratching, fidgeting
+- Casual conversations with hand gestures
+- Hands accidentally entering sensor area
+
+PHASE 2: FEATURE EXTRACTION
+===========================
+
+Convert JSON files to ML features using Python script:
+
+Key Features to Extract:
+- Hand tracking consistency (gaps in tracking)
+- Movement smoothness (velocity variance)
+- Average velocity and acceleration
+- Finger position stability
+- Grab/pinch strength patterns
+- Hand presence duration
+- Sudden movement detection
+
+Libraries Needed:
+- pandas (data handling)
+- numpy (mathematical operations)
+- json (file reading)
+
+Output: CSV file with one row per recording, columns for each feature + label
+
+PHASE 3: DATA PREPROCESSING
+===========================
+
+Clean and prepare data for ML:
+1. Handle missing values
+2. Normalize features (0-1 scale)
+3. Split into train/validation/test sets (70/15/15)
+4. Check for data imbalance
+5. Remove outliers if necessary
+
+PHASE 4: MODEL TRAINING & SELECTION
+===================================
+
+Try multiple ML algorithms using scikit-learn:
+
+Models to Test:
+1. Random Forest (good starting point)
+2. Logistic Regression (simple, interpretable)
+3. Support Vector Machine (handles complex patterns)
+4. Gradient Boosting (often high performance)
+
+Evaluation Method:
+- Cross-validation on training set
+- Test on held-out test set
+- Metrics: Accuracy, Precision, Recall, F1-score
+- Confusion matrix analysis
+
+Model Selection:
+- Compare performance of all models
+- Choose best performer
+- Fine-tune hyperparameters
+- Final evaluation on test set
+
+PHASE 5: INTEGRATION WITH ROBOT SYSTEM
+======================================
+
+Create real-time classification system:
+1. Load trained model
+2. Process Leap Motion data in real-time
+3. Apply same feature extraction as training
+4. Classify each movement window
+5. Only pass "intentional" movements to robot controller
+6. Add confidence threshold (e.g., >80% confidence)
+
+Integration Points:
+- Modify existing hand_streamv2.py
+- Add ML classifier between Leap Motion and robot
+- Implement sliding window for real-time classification
+- Add user feedback for incorrect classifications
+
+PHASE 6: TESTING & EVALUATION
+==============================
+
+System Testing:
+1. Test with training participants
+2. Test with new users (generalization)
+3. Measure real-world performance
+4. Document false positives/negatives
+5. User experience evaluation
+
+Performance Metrics:
+- Classification accuracy in real-time
+- Robot control responsiveness
+- User satisfaction
+- System latency measurements
+
+TECHNICAL STACK
+===============
+
+Languages & Libraries:
+- Python 3.11
+- Leap Motion SDK
+- scikit-learn (ML models)
+- pandas (data manipulation)
+- numpy (numerical operations)
+- matplotlib/seaborn (visualization)
+- json (data loading)
+
+Hardware:
+- Leap Motion Controller
+- NED2 Robotic Arm
+- Windows development environment
+
+PROJECT TIMELINE ESTIMATE
+=========================
+
+Data Collection: 2-3 weeks
+Feature Engineering: 1 week
+Model Training: 1-2 weeks
+Integration: 1-2 weeks
+Testing & Refinement: 1-2 weeks
+
+Total: 6-10 weeks
+
+CURRENT STATUS
+==============
+
+✓ Leap Motion environment setup
+✓ Data recording script created
+✓ Successfully recorded sample intentional/unintentional data
+✓ Verified data format and quality
+
+Next Immediate Steps:
+1. Continue data collection (currently have 0/400 files)
+2. Recruit 9 additional participants
+3. Collect 400 recordings
+
+NOTES & REMINDERS
+=================
+
+- Cannot guarantee 95% accuracy - realistic target is 85-92%
+- More data diversity is better than longer recordings
+- Feature engineering is crucial for good performance
+- Start simple (Random Forest) before trying complex models
+- Keep original robot control system as backup
+- Document everything for final project report
+
+FILES IN PROJECT
+================
+
+Current Files:
+- hand_streamv2.py (original robot control)
+- data_recorder.py (data collection script)
+- intentional/ (folder for intentional recordings)
+- unintentional/ (folder for unintentional recordings)
+- document.txt (this roadmap)
+
+Future Files:
+- feature_extractor.py (JSON to features conversion)
+- train_model.py (ML training script)
+- real_time_classifier.py (integrated system)
+- model.pkl (trained ML model file)
+- features.csv (extracted features dataset)
