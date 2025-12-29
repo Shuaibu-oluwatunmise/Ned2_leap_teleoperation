@@ -298,7 +298,7 @@ Actual  Int.  │ 3564     7   │
 
 ## 🤝 Contributing
 
-This is a final year university project. While contributions are not actively sought, feedback and suggestions are welcome!
+Contributions, feedback and suggestions are welcome!
 
 ### If You're Interested:
 1. Fork the repository
