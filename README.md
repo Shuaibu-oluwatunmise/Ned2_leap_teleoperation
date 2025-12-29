@@ -8,8 +8,7 @@
 
 > **Natural hand gesture control for robotic manipulation with AI-powered movement classification achieving 99.51% accuracy**
 
-![Project Banner](https://via.placeholder.com/800x200/1a1a2e/16213e?text=Leap+Motion+%E2%86%92+AI+Filter+%E2%86%92+Robot+Control)
-
+![Project Banner](https://via.placeholder.com/800x200/0066cc/ffffff?text=AI+Robotic+Teleoperation+System)
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Key Features](#key-features)
