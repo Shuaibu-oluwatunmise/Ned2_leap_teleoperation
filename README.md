@@ -8,7 +8,6 @@
 
 > **Natural hand gesture control for robotic manipulation with AI-powered movement classification achieving 99.51% accuracy**
 
-![Project Banner](https://via.placeholder.com/800x200/0066cc/ffffff?text=AI+Robotic+Teleoperation+System)
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Key Features](#key-features)
