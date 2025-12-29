@@ -1,0 +1,167 @@
+LEAP MOTION + NIRYO NED2 ROBOT CONTROL SETUP INSTRUCTIONS
+================================================================
+
+OVERVIEW
+--------
+Control a Niryo Ned2 robotic arm using Leap Motion hand tracking.
+Architecture: Windows (Leap Motion) â†’ Network â†’ Ubuntu (ROS2) â†’ Robot
+
+PREREQUISITES
+-------------
+- Windows laptop with Leap Motion Controller (LM-010)
+- Ubuntu machine/VM with ROS2 Jazzy 
+- Niryo Ned2 robot at IP 192.168.8.143
+- Both Windows and Ubuntu on same network
+
+PART 1: UBUNTU SETUP (ROS2 + Robot Driver)
+==========================================
+
+1. Run the automated setup script:
+   python3 setup_niryo.py
+
+2. Place these files in ~/ros2_drivers_ws/:
+   - hand_receiver.py
+   - robot_controller.py
+
+3. Start the robot driver:
+   cd ~/ros2_drivers_ws
+   source venv/bin/activate
+   source /opt/ros/jazzy/setup.bash
+   source install/setup.bash
+   ros2 launch niryo_ned_ros2_driver driver.launch.py drivers_list_file:=src/ned-ros2-driver/niryo_ned_ros2_driver/config/drivers_list.yaml
+
+4. In a NEW TERMINAL, calibrate the robot:
+   cd ~/ros2_drivers_ws
+   source venv/bin/activate
+   source /opt/ros/jazzy/setup.bash
+   source install/setup.bash
+   ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
+
+5. Test robot movement (optional):
+   ros2 action send_goal /Three/niryo_robot_follow_joint_trajectory_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory "{
+     trajectory: {
+       joint_names: ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6'],
+       points: [{
+         positions: [0.0, 0.5, -0.5, 0.0, 0.0, 0.0],
+         time_from_start: {sec: 3}
+       }]
+     }
+   }"
+
+PART 2: WINDOWS SETUP (Leap Motion)
+===================================
+
+1. Install Ultraleap Gemini V5.20.0 software
+2. Connect Leap Motion device via USB 3.0
+3. Verify tracking in Ultraleap Visualizer (green system tray icon)
+
+4. Setup Python environment:
+   - Install Python 3.8.8
+   - Create project folder: leap_motion_control
+   - Open PowerShell in the folder
+   
+5. Enable PowerShell scripts:
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+6. Create virtual environment:
+   py -3.8 -m venv leap_env
+   leap_env\Scripts\activate
+
+7. Install Leap Motion bindings:
+   git clone https://github.com/ultraleap/leapc-python-bindings.git
+   cd leapc-python-bindings
+   pip install -r requirements.txt
+   pip install -e leapc-python-api
+   cd ..
+
+8. Place hand_stream.py in leap_motion_control folder
+9. Update TARGET_IP in hand_stream.py to match your Ubuntu machine's IP
+
+PART 3: RUNNING THE COMPLETE SYSTEM
+===================================
+
+STEP 1 - Start Ubuntu Robot Driver (if not already running):
+Terminal 1:
+cd ~/ros2_drivers_ws
+source venv/bin/activate
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch niryo_ned_ros2_driver driver.launch.py drivers_list_file:=src/ned-ros2-driver/niryo_ned_ros2_driver/config/drivers_list.yaml
+
+STEP 2 - Start Hand Data Receiver:
+Terminal 2:
+cd ~/ros2_drivers_ws
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+python3 hand_receiver.py
+
+STEP 3 - Start Robot Controller:
+Terminal 3:
+cd ~/ros2_drivers_ws
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+python3 robot_controller.py
+
+STEP 4 - Start Windows Hand Streaming:
+Windows PowerShell:
+cd C:\Users\[username]\leap_motion_control
+leap_env\Scripts\activate
+python hand_stream.py
+
+OPERATION
+---------
+- Move your RIGHT HAND above the Leap Motion sensor
+- The robot arm will mirror your hand movements
+- Keep movements slow and controlled
+- Press Ctrl+C in any terminal to stop
+
+TROUBLESHOOTING
+---------------
+Network Issues:
+- Verify both machines on same network: ping [ubuntu-ip]
+- Check Ubuntu firewall: sudo ufw allow 9999/udp
+- Update IP address in hand_stream.py
+
+Robot Issues:
+- Ensure robot is powered and connected to network
+- Check robot calibration status
+- Verify robot namespace in configuration (should be "Three")
+
+Hand Tracking Issues:
+- Ensure good lighting above Leap Motion sensor
+- Keep hands 20-60cm above device
+- Check Ultraleap Visualizer shows hands
+
+SAFETY NOTES
+------------
+- Robot has built-in workspace limits
+- Start with small, slow movements
+- Emergency stop: Press Ctrl+C in robot_controller terminal
+- Always supervise robot operation
+
+SUCCESS INDICATORS
+------------------
+1. Ubuntu receiver shows: "Stats: X packets, Y pkt/s"
+2. Robot controller shows: "Moving to: X=..., Y=..., Z=..."
+3. Windows streamer shows: "Frames: X | FPS: Y | Hands: Z"
+4. Robot arm moves smoothly following hand
+
+FILES NEEDED
+------------
+Ubuntu:
+- setup_niryo.py (run once)
+- hand_receiver.py
+- robot_controller.py
+
+Windows:
+- hand_stream.py
+- Leap Motion hardware and software
+
+NETWORK CONFIGURATION
+--------------------
+Default setup assumes:
+- Ubuntu machine: 192.168.8.151
+- Robot: 192.168.8.143
+- Communication port: 9999 (UDP)
+
+Update IPs in configuration files if different.

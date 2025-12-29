@@ -11,17 +11,6 @@ leap_env/
 venv/
 env/
 
-# Large data files
-*.csv
-training_features.csv
-
-# Model files (usually too large for git)
-models/
-*.h5
-*.pkl
-*.joblib
-*.pth
-
 # Zip archives
 zip files/
 *.zip
