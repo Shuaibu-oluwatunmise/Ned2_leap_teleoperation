@@ -9,18 +9,18 @@
 > **Natural hand gesture control for robotic manipulation with AI-powered movement classification achieving 99.51% accuracy**
 
 ## 📋 Table of Contents
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
-- [Technologies Used](#technologies-used)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Machine Learning Pipeline](#machine-learning-pipeline)
-- [Results](#results)
-- [Next Steps](#next-steps)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [Acknowledgments](#acknowledgments)
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [System Architecture](#-system-architecture)
+- [Technologies Used](#-technologies-used)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Machine Learning Pipeline](#-machine-learning-pipeline)
+- [Results](#-results)
+- [Next Steps](#-next-steps)
+- [Documentation](#-documentation)
+- [Contributing](#-contributing)
+- [Acknowledgments](#-acknowledgments)
 
 ---
 
