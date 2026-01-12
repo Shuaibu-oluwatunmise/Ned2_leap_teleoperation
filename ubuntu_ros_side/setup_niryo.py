@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Niryo NED2 ROS2 Driver Setup Script
+Niryo NED2 ROS2 Driver Setup Script (Fixed Version)
 This script automates the complete setup process for controlling a Niryo NED2 robot with ROS2
 """
 
@@ -79,20 +79,31 @@ def main():
     run_command("sudo rosdep init", "Initializing rosdep", check=False)
     run_command("rosdep update", "Updating rosdep database")
     
-    # Step 3: Fix ROS repository issues
-    run_command("sudo sed -i 's/ros2-testing/ros2/g' /etc/apt/sources.list.d/ros2.list",
-                "Switching from ROS2 testing to main repository")
+    # Step 3: Fix ROS repository issues (optional - may not be needed)
+    print(f"\n{'='*60}")
+    print("STEP: Checking ROS repository configuration")
+    print(f"{'='*60}")
     
-    run_command("sudo rm -f /usr/share/keyrings/ros-archive-keyring.gpg",
-                "Removing old ROS GPG key")
+    # Check if ros2.list exists
+    ros_list_exists = Path("/etc/apt/sources.list.d/ros2.list").exists()
     
-    run_command("curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /tmp/ros.key",
-                "Downloading new ROS GPG key")
-    
-    run_command("sudo gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg /tmp/ros.key",
-                "Installing new ROS GPG key")
-    
-    run_command("sudo apt update", "Updating package lists")
+    if ros_list_exists:
+        run_command("sudo sed -i 's/ros2-testing/ros2/g' /etc/apt/sources.list.d/ros2.list",
+                    "Switching from ROS2 testing to main repository", check=False)
+        
+        run_command("sudo rm -f /usr/share/keyrings/ros-archive-keyring.gpg",
+                    "Removing old ROS GPG key")
+        
+        run_command("curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /tmp/ros.key",
+                    "Downloading new ROS GPG key")
+        
+        run_command("sudo gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg /tmp/ros.key",
+                    "Installing new ROS GPG key")
+        
+        run_command("sudo apt update", "Updating package lists")
+    else:
+        print("✅ ROS repository configuration looks good - no changes needed")
+        run_command("sudo apt update", "Updating package lists")
     
     # Step 4: Install MoveIt and all dependencies
     moveit_packages = [
