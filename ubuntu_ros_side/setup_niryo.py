@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Niryo NED2 ROS2 Driver Setup Script (Fixed Version)
-This script automates the complete setup process for controlling a Niryo NED2 robot with ROS2
+Niryo NED2 Dual Robot ROS2 Driver Setup Script
+This script sets up TWO Niryo NED2 robots for simultaneous control
 """
 
 import subprocess
@@ -28,25 +28,63 @@ def run_command(cmd, description="", check=True, shell=True):
         return e
 
 def create_robot_config():
-    """Create the robot configuration file"""
-    config_content = """rosbridge_port: 9090
+    """Create robot configuration file (supports single or dual robots)"""
+    print("\n" + "="*60)
+    print("ROBOT CONFIGURATION")
+    print("="*60)
+    print("This setup supports controlling 1 or 2 Niryo robots.")
+    print()
+    
+    # Ask for number of robots
+    while True:
+        num_robots = input("How many robots do you want to control? (1 or 2) [default: 1]: ").strip() or "1"
+        if num_robots in ["1", "2"]:
+            num_robots = int(num_robots)
+            break
+        print("Please enter 1 or 2")
+    
+    # Get robot 1 IP
+    robot1_ip = input("\nRobot 1 IP address [default: 192.168.8.143]: ").strip() or "192.168.8.143"
+    
+    if num_robots == 1:
+        # Single robot configuration
+        config_content = f"""rosbridge_port: 9090
 robot_namespaces:
   - "Three"
 robot_ips:
-  - "192.168.8.143"
+  - "{robot1_ip}"
 """
+        print(f"\n✅ Configured for SINGLE robot control")
+        print(f"   Robot: Three @ {robot1_ip}")
+        print(f"   Control: RIGHT HAND only")
+        
+    else:
+        # Dual robot configuration
+        robot2_ip = input("Robot 2 IP address [default: 192.168.8.144]: ").strip() or "192.168.8.144"
+        
+        config_content = f"""rosbridge_port: 9090
+robot_namespaces:
+  - "Three"
+  - "Four"
+robot_ips:
+  - "{robot1_ip}"
+  - "{robot2_ip}"
+"""
+        print(f"\n✅ Configured for DUAL robot control")
+        print(f"   Robot 1 (Three): {robot1_ip} - RIGHT HAND")
+        print(f"   Robot 2 (Four):  {robot2_ip} - LEFT HAND")
     
     config_path = Path("~/ros2_drivers_ws/src/ned-ros2-driver/niryo_ned_ros2_driver/config/drivers_list.yaml").expanduser()
     
     print(f"\n{'='*60}")
-    print("STEP: Creating robot configuration file")
+    print("STEP: Creating dual robot configuration file")
     print(f"File: {config_path}")
     print(f"{'='*60}")
     
     try:
         with open(config_path, 'w') as f:
             f.write(config_content)
-        print(f"✅ SUCCESS: Robot config created")
+        print(f"✅ SUCCESS: Dual robot config created")
         print("Configuration:")
         print(config_content)
     except Exception as e:
@@ -61,153 +99,151 @@ robot_ips:
 def main():
     print("""
 ╔══════════════════════════════════════════════════════════════╗
-║                NIRYO NED2 ROS2 SETUP SCRIPT              ║
-║          Automated setup for robotic arm control         ║
+║            NIRYO NED2 ROS2 SETUP SCRIPT                  ║
+║       Setup for controlling 1 or 2 robots with hands     ║
 ╚══════════════════════════════════════════════════════════════╝
 """)
 
-    # Step 1: Initial workspace setup
-    run_command("mkdir -p ~/ros2_drivers_ws/src", "Creating ROS2 workspace")
+    # Check if workspace already exists
+    workspace_path = Path("~/ros2_drivers_ws").expanduser()
     
-    os.chdir(Path("~/ros2_drivers_ws/src").expanduser())
-    run_command("git clone https://github.com/NiryoRobotics/ned-ros2-driver.git", 
-                "Cloning Niryo driver repository")
-    
-    os.chdir(Path("~/ros2_drivers_ws").expanduser())
-    
-    # Step 2: Initialize rosdep
-    run_command("sudo rosdep init", "Initializing rosdep", check=False)
-    run_command("rosdep update", "Updating rosdep database")
-    
-    # Step 3: Fix ROS repository issues (optional - may not be needed)
-    print(f"\n{'='*60}")
-    print("STEP: Checking ROS repository configuration")
-    print(f"{'='*60}")
-    
-    # Check if ros2.list exists
-    ros_list_exists = Path("/etc/apt/sources.list.d/ros2.list").exists()
-    
-    if ros_list_exists:
-        run_command("sudo sed -i 's/ros2-testing/ros2/g' /etc/apt/sources.list.d/ros2.list",
-                    "Switching from ROS2 testing to main repository", check=False)
+    if workspace_path.exists():
+        print(f"\n⚠️  Workspace already exists at {workspace_path}")
+        response = input("Do you want to reconfigure for dual robots? (y/n): ").strip().lower()
         
-        run_command("sudo rm -f /usr/share/keyrings/ros-archive-keyring.gpg",
-                    "Removing old ROS GPG key")
+        if response != 'y':
+            print("Setup cancelled.")
+            sys.exit(0)
         
-        run_command("curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /tmp/ros.key",
-                    "Downloading new ROS GPG key")
+        print("\n✅ Reconfiguring existing workspace for dual robots...")
+        os.chdir(workspace_path)
         
-        run_command("sudo gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg /tmp/ros.key",
-                    "Installing new ROS GPG key")
+        # Just update the config file
+        create_robot_config()
         
-        run_command("sudo apt update", "Updating package lists")
     else:
-        print("✅ ROS repository configuration looks good - no changes needed")
+        # Full setup (same as original)
+        run_command("mkdir -p ~/ros2_drivers_ws/src", "Creating ROS2 workspace")
+        
+        os.chdir(Path("~/ros2_drivers_ws/src").expanduser())
+        run_command("git clone https://github.com/NiryoRobotics/ned-ros2-driver.git", 
+                    "Cloning Niryo driver repository")
+        
+        os.chdir(Path("~/ros2_drivers_ws").expanduser())
+        
+        # Step 2: Initialize rosdep
+        run_command("sudo rosdep init", "Initializing rosdep", check=False)
+        run_command("rosdep update", "Updating rosdep database")
+        
+        # Step 3: Update packages
         run_command("sudo apt update", "Updating package lists")
+        
+        # Step 4: Install MoveIt and all dependencies
+        moveit_packages = [
+            "ros-jazzy-moveit",
+            "ros-jazzy-moveit-msgs", 
+            "ros-jazzy-moveit-core",
+            "ros-jazzy-moveit-common",
+            "ros-jazzy-moveit-configs-utils",
+            "ros-jazzy-moveit-visual-tools",
+            "ros-jazzy-moveit-ros-visualization",
+            "ros-jazzy-moveit-ros-move-group",
+            "ros-jazzy-moveit-kinematics",
+            "ros-jazzy-moveit-planners",
+            "ros-jazzy-moveit-simple-controller-manager"
+        ]
+        
+        other_packages = [
+            "ros-jazzy-joint-state-publisher-gui",
+            "ros-jazzy-launch-pytest",
+            "ros-jazzy-geometric-shapes", 
+            "ros-jazzy-random-numbers",
+            "ros-jazzy-urdfdom-py",
+            "libompl-dev",
+            "libompl16t64",
+            "ros-jazzy-ompl",
+            "ros-jazzy-hpp-fcl",
+            "python3.12-venv",
+            "python3-pip",
+            "ros-jazzy-topic-tools"
+        ]
+        
+        all_packages = " ".join(moveit_packages + other_packages)
+        run_command(f"sudo apt install -y {all_packages}", "Installing MoveIt2 and all dependencies")
+        
+        # Step 5: Install rosdep dependencies
+        run_command("rosdep install --from-paths src --ignore-src -r -y", "Installing project dependencies")
+        
+        # Step 6: Create Python virtual environment
+        run_command("python3 -m venv venv --system-site-packages", "Creating Python virtual environment")
+        
+        # Step 7: Build the workspace
+        print(f"\n{'='*60}")
+        print("STEP: Building ROS2 workspace")
+        print("This may take several minutes...")
+        print(f"{'='*60}")
+        
+        # Activate virtual environment and install Python requirements
+        run_command("bash -c 'source venv/bin/activate && pip install -r src/ned-ros2-driver/requirements.txt'", 
+                    "Installing Python requirements in virtual environment")
+        
+        # Build the workspace
+        run_command("bash -c 'source /opt/ros/jazzy/setup.bash && colcon build'", 
+                    "Building ROS2 workspace")
+        
+        # Step 8: Create dual robot configuration
+        create_robot_config()
     
-    # Step 4: Install MoveIt and all dependencies
-    moveit_packages = [
-        "ros-jazzy-moveit",
-        "ros-jazzy-moveit-msgs", 
-        "ros-jazzy-moveit-core",
-        "ros-jazzy-moveit-common",
-        "ros-jazzy-moveit-configs-utils",
-        "ros-jazzy-moveit-visual-tools",
-        "ros-jazzy-moveit-ros-visualization",
-        "ros-jazzy-moveit-ros-move-group",
-        "ros-jazzy-moveit-kinematics",
-        "ros-jazzy-moveit-planners",
-        "ros-jazzy-moveit-simple-controller-manager"
-    ]
-    
-    other_packages = [
-        "ros-jazzy-joint-state-publisher-gui",
-        "ros-jazzy-launch-pytest",
-        "ros-jazzy-geometric-shapes", 
-        "ros-jazzy-random-numbers",
-        "ros-jazzy-urdfdom-py",
-        "libompl-dev",
-        "libompl16t64",
-        "ros-jazzy-ompl",
-        "ros-jazzy-hpp-fcl",
-        "python3.12-venv",
-        "python3-pip",
-        "ros-jazzy-topic-tools"
-    ]
-    
-    all_packages = " ".join(moveit_packages + other_packages)
-    run_command(f"sudo apt install -y {all_packages}", "Installing MoveIt2 and all dependencies")
-    
-    # Step 5: Install rosdep dependencies
-    run_command("rosdep install --from-paths src --ignore-src -r -y", "Installing project dependencies")
-    
-    # Step 6: Create Python virtual environment
-    run_command("python3 -m venv venv --system-site-packages", "Creating Python virtual environment")
-    
-    # Step 7: Build the workspace
-    print(f"\n{'='*60}")
-    print("STEP: Building ROS2 workspace")
-    print("This may take several minutes...")
-    print(f"{'='*60}")
-    
-    # Activate virtual environment and install Python requirements
-    run_command("bash -c 'source venv/bin/activate && pip install -r src/ned-ros2-driver/requirements.txt'", 
-                "Installing Python requirements in virtual environment")
-    
-    # Build the workspace
-    run_command("bash -c 'source /opt/ros/jazzy/setup.bash && colcon build'", 
-                "Building ROS2 workspace")
-    
-    # Step 8: Create robot configuration
-    create_robot_config()
-    
-    # Step 9: Final instructions
+    # Final instructions
     print(f"""
 ╔══════════════════════════════════════════════════════════════╗
-║                    SETUP COMPLETE!                       ║
+║                   SETUP COMPLETE!                        ║
 ╚══════════════════════════════════════════════════════════════╝
 
-TO START USING YOUR ROBOT:
+Check your configuration file to see if you're using 1 or 2 robots:
+cat ~/ros2_drivers_ws/src/ned-ros2-driver/niryo_ned_ros2_driver/config/drivers_list.yaml
 
-1. Open 3 terminals and run these commands in each:
+TO START USING YOUR ROBOT SYSTEM:
 
-   Terminal 1 (Robot Driver):
+1. Terminal 1 (Dual Robot Driver):
    cd ~/ros2_drivers_ws
-   source venv/bin/activate
-   source /opt/ros/jazzy/setup.bash  
-   source install/setup.bash
-   ros2 launch niryo_ned_ros2_driver driver.launch.py drivers_list_file:=src/ned-ros2-driver/niryo_ned_ros2_driver/config/drivers_list.yaml
+   ./launch_driver.sh
 
-   Terminal 2 (Joint State Relay):
-   source /opt/ros/jazzy/setup.bash
-   ros2 run topic_tools relay /Three/joint_states /joint_states
-
-   Terminal 3 (Robot Control):
+2. Terminal 2 (Hand Receiver):
    cd ~/ros2_drivers_ws
-   source venv/bin/activate
+   unset ROS_DISCOVERY_SERVER
    source /opt/ros/jazzy/setup.bash
    source install/setup.bash
+   export ROS_DOMAIN_ID=1
+   python3 hand_receiverV2.py
 
-2. Calibrate the robot:
-   ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{{value: 1}}"
+3. Terminal 3 (Robot Controller):
+   cd ~/ros2_drivers_ws
+   unset ROS_DISCOVERY_SERVER
+   source /opt/ros/jazzy/setup.bash
+   source install/setup.bash
+   export ROS_DOMAIN_ID=1
+   
+   For SINGLE robot (right hand only):
+   python3 robot_controllerV2.py
+   
+   For DUAL robots (both hands):
+   python3 robot_controller_both.py
 
-3. Move the robot:
-   ros2 action send_goal /Three/niryo_robot_follow_joint_trajectory_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory "{{
-     trajectory: {{
-       joint_names: ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6'],
-       points: [{{
-         positions: [0.0, 0.5, -0.5, 0.0, 0.0, 0.0],
-         time_from_start: {{sec: 3}}
-       }}]
-     }}
-   }}"
+CALIBRATE ROBOT(S):
+Single robot:
+  ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{{value: 1}}"
 
-ROBOT CONFIGURATION:
-- IP Address: 192.168.8.143  
-- Namespace: Three
-- Make sure your robot is powered on and connected to the network!
+Dual robots:
+  ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{{value: 1}}"
+  ros2 service call /Four/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{{value: 1}}"
 
-Happy robotics! 🤖
+VERIFY SETUP:
+ros2 node list
+Single robot: Should show /ros2_driver_Three
+Dual robots: Should show /ros2_driver_Three AND /ros2_driver_Four
+
+Happy robot control! 🤖
 """)
 
 if __name__ == "__main__":
