@@ -3,14 +3,14 @@ LEAP MOTION + NIRYO NED2 ROBOT CONTROL SETUP INSTRUCTIONS
 
 OVERVIEW
 --------
-Control a Niryo Ned2 robotic arm using Leap Motion hand tracking.
-Architecture: Windows (Leap Motion) â†’ Network â†’ Ubuntu (ROS2) â†’ Robot
+Control 1 or 2 Niryo Ned2 robotic arms using Leap Motion hand tracking.
+Architecture: Windows (Leap Motion) → Network → Ubuntu (ROS2) → Robot(s)
 
 PREREQUISITES
 -------------
 - Windows laptop with Leap Motion Controller (LM-010)
 - Ubuntu machine/VM with ROS2 Jazzy 
-- Niryo Ned2 robot at IP 192.168.8.143
+- 1 or 2 Niryo Ned2 robots on same network
 - Both Windows and Ubuntu on same network
 
 PART 1: UBUNTU SETUP (ROS2 + Robot Driver)
@@ -18,10 +18,16 @@ PART 1: UBUNTU SETUP (ROS2 + Robot Driver)
 
 1. Run the automated setup script:
    python3 setup_niryo.py
+   
+   The script will ask:
+   - How many robots? (1 or 2)
+   - Robot IP addresses
+   - Automatically configures for single or dual robot control
 
 2. Place these files in ~/ros2_drivers_ws/:
    - hand_receiverV2.py
-   - robot_controllerV2.py
+   - robot_controllerV2.py (single robot - right hand only)
+   - robot_controller_both.py (dual robot - both hands)
    - launch_driver.sh
    - setup_ros2_env.sh
 
@@ -30,19 +36,48 @@ PART 1: UBUNTU SETUP (ROS2 + Robot Driver)
    chmod +x launch_driver.sh
    chmod +x setup_ros2_env.sh
 
+PART 2: WINDOWS SETUP (Leap Motion)
+===================================
+
+1. Install Ultraleap Gemini V5.20.0 software
+2. Connect Leap Motion device via USB 3.0
+3. Verify tracking in Ultraleap Visualizer (green system tray icon)
+
+4. Setup Python environment:
+   - Install Python 3.8.8
+   - Create project folder: leap_motion_control
+   - Open PowerShell in the folder
+   
+5. Enable PowerShell scripts:
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+6. Create virtual environment:
+   py -3.8 -m venv leap_env
+   leap_env\Scripts\activate
+
+7. Install Leap Motion bindings:
+   git clone https://github.com/ultraleap/leapc-python-bindings.git
+   cd leapc-python-bindings
+   pip install -r requirements.txt
+   pip install -e leapc-python-api
+   cd ..
+
+8. Place hand_stream.py in leap_motion_control folder
+9. Update TARGET_IP in hand_stream.py to match your Ubuntu machine's IP
+
 PART 3: RUNNING THE COMPLETE SYSTEM
 ===================================
 
 IMPORTANT: Before starting, ensure no duplicate drivers are running:
    ps aux | grep ros2_driver
-   (Should show nothing or only ONE instance)
+   (Should show nothing or only ONE instance per robot)
 
 STEP 1 - Start Ubuntu Robot Driver:
 Terminal 1:
 cd ~/ros2_drivers_ws
 ./launch_driver.sh
 
-Wait until you see: "[INFO] Bridge node initialized for robot with ip: 192.168.8.143"
+Wait until you see: "[INFO] Bridge node initialized for robot with ip: ..."
 
 STEP 2 - Start Hand Data Receiver:
 Terminal 2:
@@ -60,7 +95,12 @@ unset ROS_DISCOVERY_SERVER
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 export ROS_DOMAIN_ID=1
+
+For SINGLE robot (right hand only):
 python3 robot_controllerV2.py
+
+For DUAL robots (both hands):
+python3 robot_controller_both.py
 
 Wait for: "Home position reached - ready for gesture activation"
 
@@ -72,10 +112,22 @@ python hand_stream.py
 
 OPERATION
 ---------
+SINGLE ROBOT MODE:
 - Move your RIGHT HAND above the Leap Motion sensor
 - Hold POINTING gesture for 2 seconds to START mirroring
 - The robot arm will mirror your hand movements
 - Hold PEACE gesture for 2 seconds to STOP mirroring
+
+DUAL ROBOT MODE:
+- RIGHT HAND controls Robot 1 (Three)
+- LEFT HAND controls Robot 2 (Four)
+- Right hand POINTING 2s → START Robot 1
+- Left hand POINTING 2s → START Robot 2
+- Right hand PEACE 2s → STOP Robot 1
+- Left hand PEACE 2s → STOP Robot 2
+- Each robot operates independently
+
+GENERAL:
 - Keep movements slow and controlled
 - Press Ctrl+C in any terminal to stop
 
@@ -94,15 +146,18 @@ Network Issues:
 - Update IP address in hand_stream.py
 
 Robot Issues:
-- Ensure robot is powered and connected to network
+- Ensure robot(s) powered and connected to network
 - Check robot calibration status
-- Verify robot namespace in configuration (should be "Three")
-- Verify only ONE driver running: ros2 node list (should show only one /ros2_driver_Three)
+- Verify robot namespace in configuration (Three, Four)
+- Verify correct number of drivers: ros2 node list
+  Single: /ros2_driver_Three
+  Dual: /ros2_driver_Three AND /ros2_driver_Four
 
 Hand Tracking Issues:
 - Ensure good lighting above Leap Motion sensor
 - Keep hands 20-60cm above device
 - Check Ultraleap Visualizer shows hands
+- For dual robot: ensure both hands visible
 
 SAFETY NOTES
 ------------
@@ -110,22 +165,24 @@ SAFETY NOTES
 - Start with small, slow movements
 - Emergency stop: Press Ctrl+C in robot_controller terminal
 - Always supervise robot operation
+- For dual robots: ensure adequate spacing to avoid collisions
 
 SUCCESS INDICATORS
 ------------------
-1. Terminal 1 (driver): "Bridge node initialized for robot with ip: 192.168.8.143"
+1. Terminal 1 (driver): "Bridge node initialized for robot with ip: ..."
 2. Terminal 2 (receiver): "Stats: X packets, Y pkt/s, last: Z.Zs ago"
 3. Terminal 3 (controller): "Home position reached - ready for gesture activation"
 4. Windows: "Frames: X | FPS: Y | Hands: Z"
 5. After pointing gesture: "MIRRORING STARTED - Natural hand control active"
-6. Robot arm moves smoothly following hand with NO warnings
+6. Robot arm(s) move smoothly following hand with NO warnings
 
 FILES NEEDED
 ------------
 Ubuntu:
-- setup_niryo.py (run once)
+- setup_niryo.py (run once - supports 1 or 2 robots)
 - hand_receiverV2.py
-- robot_controllerV2.py
+- robot_controllerV2.py (single robot)
+- robot_controller_both.py (dual robot)
 - launch_driver.sh
 - setup_ros2_env.sh
 
@@ -137,7 +194,17 @@ NETWORK CONFIGURATION
 --------------------
 Default setup assumes:
 - Ubuntu machine: 192.168.8.151
-- Robot: 192.168.8.143
+- Robot 1: 192.168.8.143
+- Robot 2: 192.168.8.144 (if using dual robot mode)
 - Communication port: 9999 (UDP)
 
 Update IPs in configuration files if different.
+
+CALIBRATION COMMANDS
+-------------------
+Single robot:
+ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
+
+Dual robots:
+ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
+ros2 service call /Four/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
