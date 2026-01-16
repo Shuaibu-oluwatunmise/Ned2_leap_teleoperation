@@ -238,7 +238,7 @@ def main():
 """)
     
     # Configuration
-    TARGET_IP = "192.168.8.151"  # Ubuntu VM IP address
+    TARGET_IP = "192.168.8.151"  # Ubuntu VM IP address - UPDATE THIS IF DIFFERENT!
     TARGET_PORT = 9999
     
     print(f"Configuration:")
