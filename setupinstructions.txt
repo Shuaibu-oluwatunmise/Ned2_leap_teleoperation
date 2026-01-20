@@ -208,3 +208,26 @@ ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned
 Dual robots:
 ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
 ros2 service call /Four/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
+
+
+Quick Reference:
+Enable FreeMotion (move by hand):
+ros2 service call /Four/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: true}"
+
+Disable FreeMotion (robot becomes stiff/controlled):
+ros2 service call /Four/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: false}"
+
+For Robot Three (follower):
+# Enable
+ros2 service call /Three/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: true}"
+
+# Disable
+ros2 service call /Three/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: false}"
+
+Typical Workflow:
+Start leader-follower control → Robot Four enters FreeMotion automatically
+Move Robot Four by hand → Robot Three follows
+Stop the script (Ctrl+C)
+Disable FreeMotion on Robot Four:
+ros2 service call /Four/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: false}"
+Now Robot Four is stiff again and won't move freely
