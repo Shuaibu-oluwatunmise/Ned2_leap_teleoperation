@@ -1,0 +1,220 @@
+# Leader-Follower Robot Control - Setup Instructions
+
+## Initial Setup (One-Time)
+
+### 1. Make Scripts Executable
+After cloning or downloading the files, make the launch scripts executable:
+
+```bash
+cd ~/ros2_drivers_ws
+chmod +x launch_driver.sh
+chmod +x setup_ros2_env.sh
+chmod +x run_leader_follower.sh
+chmod +x run_bilateral.sh
+chmod +x leader_follower_control.py
+chmod +x bilateral_control.py
+```
+
+### 2. Verify Files Exist
+Check that all required files are present:
+
+```bash
+ls -l ~/ros2_drivers_ws/
+```
+
+You should see:
+- `launch_driver.sh` - Starts the ROS2 driver for both robots
+- `setup_ros2_env.sh` - Sets up ROS2 environment
+- `run_leader_follower.sh` - Launches unidirectional control
+- `run_bilateral.sh` - Launches bilateral control
+- `leader_follower_control.py` - Unidirectional control script
+- `bilateral_control.py` - Bilateral control script
+
+---
+
+## Running the System
+
+### Terminal Layout
+You'll need **2 terminals** for operation:
+- **Terminal 1**: Driver (always running)
+- **Terminal 2**: Control script (unidirectional OR bilateral)
+
+---
+
+## Option A: Unidirectional Control (Fixed Leader)
+
+### Terminal 1 - Start Driver
+```bash
+cd ~/ros2_drivers_ws
+./launch_driver.sh
+```
+
+Wait for both robots to connect. You should see:
+- `/ros2_driver_Three`
+- `/ros2_driver_Four`
+
+### Terminal 2 - Calibrate Robots (First Time Only)
+```bash
+cd ~/ros2_drivers_ws
+source setup_ros2_env.sh
+
+# Calibrate Robot Three (Follower)
+ros2 service call /Three/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
+
+# Calibrate Robot Four (Leader)
+ros2 service call /Four/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
+```
+
+Wait ~30 seconds per robot for calibration to complete.
+
+### Terminal 2 - Run Unidirectional Control
+```bash
+cd ~/ros2_drivers_ws
+./run_leader_follower.sh
+```
+
+**Usage:**
+- Move Robot Four by hand → Robot Three follows
+- Press Ctrl+C to stop
+
+**When Done:**
+```bash
+# Disable FreeMotion on Robot Four
+ros2 service call /Four/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: false}"
+```
+
+---
+
+## Option B: Bilateral Control (Button-Triggered)
+
+### Terminal 1 - Start Driver
+```bash
+cd ~/ros2_drivers_ws
+./launch_driver.sh
+```
+
+### Terminal 2 - Calibrate Robots (First Time Only)
+Same as above.
+
+### Terminal 2 - Run Bilateral Control
+```bash
+cd ~/ros2_drivers_ws
+./run_bilateral.sh
+```
+
+**Usage:**
+1. Both robots start controlled (stiff)
+2. Press FreeMotion button on Robot Four → it becomes leader
+3. Move Robot Four by hand → Robot Three follows
+4. Press FreeMotion button on Robot Three → roles switch
+5. Move Robot Three by hand → Robot Four follows
+6. Press Ctrl+C to stop
+
+**When Done:**
+```bash
+# Disable FreeMotion on both robots
+ros2 service call /Three/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: false}"
+ros2 service call /Four/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: false}"
+```
+
+---
+
+## Swapping Leader/Follower in Unidirectional Control
+
+By default, Robot Four is the leader and Robot Three is the follower.
+To swap roles (make Robot Three the leader):
+
+### Edit leader_follower_control.py
+
+Open the file:
+```bash
+nano ~/ros2_drivers_ws/leader_follower_control.py
+```
+
+Find lines 29-30 and swap the values:
+```python
+# BEFORE (Four is leader):
+self.leader_ns = 'Four'
+self.follower_ns = 'Three'
+
+# AFTER (Three is leader):
+self.leader_ns = 'Three'
+self.follower_ns = 'Four'
+```
+
+Save (Ctrl+O, Enter) and exit (Ctrl+X).
+
+Now when you run `./run_leader_follower.sh`:
+- Robot Three will be in FreeMotion (move it by hand)
+- Robot Four will follow
+
+---
+
+## Troubleshooting
+
+### Scripts Not Executable
+If you get "Permission denied":
+```bash
+chmod +x <script_name>.sh
+```
+
+### Driver Not Connecting
+1. Check robots are powered on
+2. Verify network connection
+3. Check IP addresses in `src/ned-ros2-driver/niryo_ned_ros2_driver/config/drivers_list.yaml`
+
+### Robots Not Calibrated
+Run calibration commands before starting control scripts.
+
+### Control Not Working
+1. Verify driver is running (Terminal 1)
+2. Check `ros2 node list` shows both drivers
+3. Restart both terminals
+
+---
+
+## Quick Reference
+
+### File Locations
+- **Workspace**: `~/ros2_drivers_ws/`
+- **Control Scripts**: `~/ros2_drivers_ws/*.py`
+- **Launch Scripts**: `~/ros2_drivers_ws/*.sh`
+- **Config**: `~/ros2_drivers_ws/src/ned-ros2-driver/niryo_ned_ros2_driver/config/`
+
+### Common Commands
+```bash
+# List ROS2 nodes
+ros2 node list
+
+# List topics
+ros2 topic list
+
+# Check joint states
+ros2 topic echo /Four/joint_states
+
+# Calibrate robot
+ros2 service call /<ROBOT>/niryo_robot/joints_interface/calibrate_motors niryo_ned_ros2_interfaces/srv/SetInt "{value: 1}"
+
+# Toggle FreeMotion
+ros2 service call /<ROBOT>/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: true}"
+ros2 service call /<ROBOT>/niryo_robot/learning_mode/activate niryo_ned_ros2_interfaces/srv/SetBool "{value: false}"
+```
+
+Replace `<ROBOT>` with `Three` or `Four`.
+
+---
+
+## Performance Tuning
+
+To adjust latency/responsiveness, edit the control scripts:
+
+**Unidirectional**: `leader_follower_control.py` (lines 32-34)
+**Bilateral**: `bilateral_control.py` (lines 32-34)
+
+```python
+self.control_rate = 200.0           # Hz (higher = faster)
+self.trajectory_duration = 0.03     # seconds (lower = less lag)
+self.smoothing_alpha = 0.7          # 0-1 (higher = more responsive)
+```
+
+After editing, restart the control script.
